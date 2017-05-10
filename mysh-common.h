@@ -47,7 +47,9 @@ char * readCommand(int);
 struct StringArray splitStrByDelim(char *, const char []);
 
 // function to create a new process and execute a command passed to it
-void forkAndExecuteCommand();
+void forkAndExecuteCommand(struct Command, int);
+
+void forkAndExecuteCommandWithRedirect(struct Command, int);
 
 // remove leading/trailing white spaces from a str
 char *trimwhitespace(char *str);

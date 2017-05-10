@@ -139,7 +139,7 @@ void printArray(char ** array, int len){
 /*
   Function to fork the current process and execute the cmd passed to it
 */
-void forkAndExecuteCommand(struct Command cmd){
+void forkAndExecuteCommand(struct Command cmd, int shellID){
 
   // process id and wait process id
   pid_t pid, waitPid;
@@ -158,7 +158,71 @@ void forkAndExecuteCommand(struct Command cmd){
 
 	// child process
 	if (pid == 0) {
+
+
     execvp(cmd.cmd, cmd.parameters);
+
+    // ERROR
+		perror("ERROR: Child should never arrive here.\n");
+    exit(EXIT_FAILURE);
+	}
+	// parent process
+	else {
+    // wait for child to finish
+    waitPid = wait(&status);
+		if (waitPid == -1) {
+			fprintf(stderr, "ERROR: Waitpid failed.\n");
+			exit(EXIT_FAILURE);
+		}
+  }
+}
+
+
+void forkAndExecuteCommandWithRedirect(struct Command cmd, int shellID){
+
+  // process id and wait process id
+  pid_t pid, waitPid;
+
+  int in, out;
+
+  // int fd[2];
+
+  // the process status
+  int status;
+
+  // fork current proccess
+	pid = fork();
+
+  // if fork fails
+	if (pid < 0) {
+		fprintf(stderr, "ERROR: Fork failed.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// child process
+	if (pid == 0) {
+
+    in = open("test.txt", O_RDONLY);
+    out = open("out.txt", O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IRGRP | S_IWGRP | S_IWUSR);
+
+    // replace standard input with input file
+
+    dup2(in, 0);
+
+    // replace standard output with output file
+
+    // dup2(out, 1);
+
+    // close unused file descriptors
+
+    close(in);
+    close(out);
+
+    char * par[] = {"cat", NULL};
+    // execvp(cmd.cmd, cmd.parameters);
+    execvp("cat",par);
+
+    // ERROR
 		perror("ERROR: Child should never arrive here.\n");
     exit(EXIT_FAILURE);
 	}
