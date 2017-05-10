@@ -5,16 +5,6 @@
 // include custom files
 #include "mysh-common.h"
 
-// include env files
-#include <string.h>
-#include <stdlib.h>
-
-// command struct
-struct Command {
-   char* cmd;
-   char** cmdArguments;
-};
-
 // function to read command from the stdin
 char * readCommand(int shellID) {
 
@@ -87,56 +77,117 @@ struct StringArray splitStrByDelim(char * str, const char delim[]){
    strArray.size = storeSize;
 
    return strArray;
-  //  free(tokenStore);
-  //  return test;
 }
 
+// Note: This function returns a pointer to a substring of the original string.
+// If the given string was allocated dynamically, the caller must not overwrite
+// that pointer with the returned value, since the original pointer must be
+// deallocated using the same allocator with which it was allocated.  The return
+// value must NOT be deallocated using free() etc.
+char *trimwhitespace(char *str){
+
+  char *end;
+
+  // Trim leading space
+  while(isspace((unsigned char)*str)) str++;
+
+  if(*str == 0)  // All spaces?
+    return str;
+
+  // Trim trailing space
+  end = str + strlen(str) - 1;
+  while(end > str && isspace((unsigned char)*end)) end--;
+
+  // Write new null terminator
+  *(end+1) = 0;
+
+  return str;
+}
+
+/*
+  Function to split the array {cmd | <parameters>}
+*/
+struct Command seperateCmdParams(struct StringArray array) {
+  // command struct
+  struct Command t;
+  // assign command to struct
+  t.cmd = array.store[0];
+  // assign the remaining values of the collection as parameters
+  t.parameters = array.store;
+  // the size of the parameters is the original size of the array
+  t.param_size = array.size;
+
+  // debug
+  printf("Command: %s\n", t.cmd);
+  printArray(t.parameters, t.param_size);
+  return t;
+}
+
+/*
+  Function to print a char array
+*/
 void printArray(char ** array, int len){
   printf("------------------ \n");
   printf("Array Len: %d \n", len);
   printf("------------------ \n");
 
   for(int i = 0; i < len; i++){
-    printf("\nitem at %d, with value: %s",i,array[i]);
+    printf("item at %d, with value: %s\n",i,array[i]);
   }
 }
 
-// void forkAndExecuteCommand(){
+/*
+  Function to fork the current process and execute the cmd passed to it
+*/
+void forkAndExecuteCommand(struct Command cmd){
+
+  // process id and wait process id
+  pid_t pid, waitPid;
+
+  // the process status
+  int status;
+
+  // fork current proccess
+	pid = fork();
+
+  // if fork fails
+	if (pid < 0) {
+		fprintf(stderr, "ERROR: Fork failed.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// child process
+	if (pid == 0) {
+    execvp(cmd.cmd, cmd.parameters);
+		perror("ERROR: Child should never arrive here.\n");
+    exit(EXIT_FAILURE);
+	}
+	// parent process
+	else {
+    // wait for child to finish
+    waitPid = wait(&status);
+		if (waitPid == -1) {
+			fprintf(stderr, "ERROR: Waitpid failed.\n");
+			exit(EXIT_FAILURE);
+		}
+  }
+}
+
+
+// /*
+//   Function to redirect input to file
+// */
+// void redirectInputToFile(int fd[]){
+//   fd = open(fd[0], O_RDONLY);
+//   dup2(fd, STDIN_FILENO);
+//   close(fd);
+// }
 //
-//   struct Command cmd;
-//   strcpy( cmd.cmd, "ls");
-//   strcpy( cmd.cmdArguments[0], "ls");
-//   strcpy( cmd.cmdArguments[1], "-la");
-//   strcpy( cmd.cmd[2], NULL);
-//
-//   // process id and wait process id
-//   pid_t pid, waitPid;
-//
-//   // the process status
-//   int status;
-//
-//   // fork current proccess
-// 	pid = fork();
-//
-//   // if fork fails
-// 	if (pid < 0) {
-// 		fprintf(stderr, "ERROR: Fork failed.\n");
-// 		exit(EXIT_FAILURE);
-// 	}
-//
-// 	// child process
-// 	if (pid == 0) {
-//
-//     execvp(cmd.cmd, cmd.cmdArguments);
-// 		perror("ERROR: Child should never arrive here.\n");
-// 	}
-// 	// parent process
-// 	else {
-//     // wait for child to finish
-//     waitPid = wait(&status);
-// 		if (waitPid == -1) {
-// 			fprintf(stderr, "ERROR: Waitpid failed.\n");
-// 			exit(EXIT_FAILURE);
-// 		}
-//   }
+// /*
+//   Function to redirect output to file
+// */
+// void redirectOutputToFile(int fd){
+//   fd = create(fd[1] , 0644) ;
+//   dup2(fd, STDOUT_FILENO);
+//   close(fd);
 // }

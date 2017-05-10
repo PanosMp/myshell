@@ -7,11 +7,8 @@
 // include
 #include "mysh-common.h"
 
-// implementing mysh1
-// supports commands without parameters
-// however if parameters are passed the
-// code will execute normally as if it
-// was meant to handle commands with parameters.
+// implementing mysh2
+// supports commands with parameters.
 int main(int argc, char** argv) {
 
   // struct to hold the string array of the splitted command
@@ -22,15 +19,17 @@ int main(int argc, char** argv) {
   char * cmd;
 
   // read user input
-  while((cmd = readCommand(1)) != NULL){
+  while((cmd = readCommand(2)) != NULL){
     // trim the whitespaces from the command
     cmd = trimwhitespace(cmd);
+
+    // read command cat < in.txt > out.txt || cat < in.txt >> out.txt
     // assign the splitted command to the collection
-    collection = splitStrByDelim(cmd, SPACE_DELIM);
+    collection = splitStrByDelim(cmd, RE_IN);
     // transform the array to command struct
     c = seperateCmdParams(collection);
     // fork and execute the command
-    forkAndExecuteCommand(c);
+    // forkAndExecuteCommand(c);
     // free allocated memory
     free(collection.store);
     free(cmd);
