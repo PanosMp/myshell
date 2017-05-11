@@ -26,6 +26,8 @@
 #define RE_OUT ">"
 // Redirect + append output
 #define RA_OUT ">>"
+// pipe delim
+#define PIPE_DELIM "|"
 
 // String Array Data Structure
 struct StringArray {
@@ -36,9 +38,23 @@ struct StringArray {
 // Command Data Structure
 struct Command{
   char* cmd;
-  char** parameters;
   int param_size;
+  char** parameters;
+  int in;
+  int out;
 };
+
+//
+struct Pipeline{
+  const char **argv;
+};
+
+struct PipelineStore{
+  struct Command *store;
+  int size;
+};
+
+void printPipeline(struct PipelineStore);
 
 // function to read command from terminal
 char * readCommand(int);
@@ -59,3 +75,19 @@ struct Command seperateCmdParams(struct StringArray);
 
 // function to print a char array with given length
 void printArray(char **, int);
+
+// filter command for descriptors
+struct Command filterCommandFd(struct Command);
+
+// print command struct
+void printCommandStruct(struct Command);
+
+//
+// int fork_pipes (int, struct Pipeline *);
+// int fork_pipes (int n, struct Command *);
+void fork_pipes (int , struct PipelineStore );
+
+// int spawn_proc (int, int, struct Pipeline *);
+void spawn_proc (int , int , struct Command );
+
+struct PipelineStore transformPipes(struct StringArray);

@@ -1,0 +1,11 @@
+total 112
+drwxrwxr-x 2 panos panos  4096 Μάι  11 18:16 bin
+-rw-rw-r-- 1 panos panos     0 Μάι  11 18:04 in.txt
+-rw-rw-r-- 1 panos panos  1124 Μάι  11 14:19 mysh1.c
+-rw-rw-r-- 1 panos panos  1006 Μάι  11 14:59 mysh2.c
+-rw-rw-r-- 1 panos panos  1133 Μάι  11 14:19 mysh3.c
+-rw-rw-r-- 1 panos panos  1919 Μάι  11 18:03 mysh4.c
+-rw-rw-r-- 1 panos panos 10148 Μάι  11 18:01 mysh-common.c
+-rw-rw-r-- 1 panos panos  1940 Μάι  11 17:51 mysh-common.h
+-rw-rw---- 1 panos panos     0 Μάι  11 18:16 out.txt
+-rw-rw-r-- 1 panos panos    10 Μάι   9 17:50 README.md

@@ -29,11 +29,13 @@ int main(int argc, char** argv) {
     collection = splitStrByDelim(cmd, SPACE_DELIM);
     // transform the array to command struct
     c = seperateCmdParams(collection);
+    // print the struct
+    printCommandStruct(c);
     // fork and execute the command
     forkAndExecuteCommand(c,currentShellID);
     // free allocated memory
     free(collection.store);
-    free(cmd);
+    // free(cmd);
   }
 
   // exit successfully
