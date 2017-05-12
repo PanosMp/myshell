@@ -12,8 +12,8 @@ pipes: ls | sort -u | wc -l > count.txt
 
 # compiling
 
-gcc -Wall mysh<X>.c mysh-common.c -o bin/mysh<X>
+gcc -Wall myshX.c mysh-common.c -o bin/myshX
 
 # execute
 
-./mysh<X>
+./myshX
