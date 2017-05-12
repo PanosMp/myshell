@@ -6,10 +6,10 @@
 // include
 #include "mysh-common.h"
 
-// implementing mysh4
+// implementing mysh5
 // supports commands with parameters and std in-out redirections and pipes.
 int main(int argc, char** argv) {
-  int currentShellID = 4;
+  int currentShellID = 5;
   // struct to hold the pipeline
   struct PipelineStore pStore;
   // struct to hold the string array of the splitted command

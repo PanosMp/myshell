@@ -1,8 +1,7 @@
 /*
-*  < AUTHOR >
+*  Panagiotis Mparmpagiannis (AM: 3110124)
+*  Tsifrikas Georgios (AM: 3110205)
 */
-
-// mysh1
 
 // include
 #include "mysh-common.h"

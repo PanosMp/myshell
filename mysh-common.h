@@ -1,5 +1,6 @@
 /*
-*  < AUTHOR >
+*  Panagiotis Mparmpagiannis (AM: 3110124)
+*  Tsifrikas Georgios (AM: 3110205)
 */
 
 // include env files
@@ -44,16 +45,13 @@ struct Command{
   int out;
 };
 
-//
-struct Pipeline{
-  const char **argv;
-};
-
+// Pipeline Struct
 struct PipelineStore{
   struct Command *store;
   int size;
 };
 
+// fn to prin pipeline struct
 void printPipeline(struct PipelineStore);
 
 // function to read command from terminal
@@ -65,6 +63,7 @@ struct StringArray splitStrByDelim(char *, const char []);
 // function to create a new process and execute a command passed to it
 void forkAndExecuteCommand(struct Command, int);
 
+// fork supporting redirections
 void forkAndExecuteCommandWithRedirect(struct Command, int);
 
 // remove leading/trailing white spaces from a str
@@ -82,12 +81,11 @@ struct Command filterCommandFd(struct Command);
 // print command struct
 void printCommandStruct(struct Command);
 
-//
-// int fork_pipes (int, struct Pipeline *);
-// int fork_pipes (int n, struct Command *);
-void fork_pipes (int , struct PipelineStore );
+// fork handler
+int fork_pipes (int , struct PipelineStore );
 
 // int spawn_proc (int, int, struct Pipeline *);
-void spawn_proc (int , int , struct Command );
+int spawn_proc (int , int , struct Command );
 
+// transform command to pipeline struct
 struct PipelineStore transformPipes(struct StringArray);

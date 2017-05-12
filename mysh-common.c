@@ -1,5 +1,6 @@
 /*
-*  < AUTHOR >
+*  Panagiotis Mparmpagiannis (AM: 3110124)
+*  Tsifrikas Georgios (AM: 3110205)
 */
 
 // include custom files
@@ -259,8 +260,9 @@ struct Command filterCommandFd(struct Command cmd){
     else if(strcmp(cmd.parameters[i], RE_OUT) == 0){
       //incr the pointer to get the in file
       i++;
-      cmd.out = open(cmd.parameters[i], O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR);
+      cmd.out = open(cmd.parameters[i], O_WRONLY | O_TRUNC | O_CREAT , S_IRUSR | S_IRWXU);
 
+      perror("open");
       if(cmd.out < 0){
         printf("Failed to redirect output. Exiting...\n");
         exit(EXIT_FAILURE);
@@ -269,7 +271,7 @@ struct Command filterCommandFd(struct Command cmd){
     }else if(strcmp(cmd.parameters[i], RA_OUT) == 0){
       //incr the pointer to get the in file
       i++;
-      cmd.out = open(cmd.parameters[i], O_RDWR | O_APPEND | O_CREAT, S_IRUSR);
+      cmd.out = open(cmd.parameters[i], O_RDWR | O_APPEND | O_CREAT , S_IRUSR | S_IRWXU);
       // printf("Redirecting stdout_append to: %s\n", cmd.parameters[i]);
       if(cmd.out < 0){
         printf("Failed to redirect output (append_mode). Exiting...\n");
@@ -300,49 +302,129 @@ struct Command filterCommandFd(struct Command cmd){
 /*
   Spawn proc
 */
-void spawn_proc (int in, int out, struct Command cmd){
+int spawn_proc (int in, int out, struct Command cmd){
+
+    pid_t pid;
+
+    if ((pid = fork ()) == 0)
+      {
+        perror("fork");
+        if (in != 0)
+          {
+            dup2 (in, 0);
+            close (in);
+          }
+
+        if (out != 1)
+          {
+            dup2 (out, 1);
+            close (out);
+          }
+
+        if(cmd.in > 0){
+          // replace standard input with input file
+          dup2(cmd.in, 0);
+
+          // close unused file descriptor
+          close(cmd.in);
+        }
+
+        // check if the stout is redirected
+        if(cmd.out > 0){
+          // replace standard output with output file
+          dup2(cmd.out, 1);
+
+          // close unused file descriptor
+          close(cmd.out);
+        }
+
+        if(cmd.parameters[cmd.param_size - 1] != NULL && cmd.param_size > 1){
+          cmd.parameters[cmd.param_size] = NULL;
+        }
+
+        // execute the command
+        execvp(cmd.cmd, cmd.parameters);
+
+        perror("dup2");
+        perror("close");
+        return execvp(cmd.cmd, cmd.parameters);
+        perror("execvp");
+      }
+
+    printf("Pid:  %d\n", pid);
+    return pid;
+}
+
+void forkAndProcessPipelines(struct Command cmd, int shellID){
+  // process id and wait process id
   pid_t pid, waitPid;
 
+  // the process status
   int status;
 
-  if ((pid = fork ()) == 0)
-  {
+  // fork current proccess
+	pid = fork();
 
-    if (in != 0){
-      dup2 (in, 0);
-      close (in);
+  // if fork fails
+	if (pid < 0) {
+		fprintf(stderr, "ERROR: Fork failed.\n");
+		exit(EXIT_FAILURE);
+	}
+
+	// child process
+	if (pid == 0) {
+
+    // check if the stdin is redirected
+    if(cmd.in > 0){
+      // replace standard input with input file
+      dup2(cmd.in, 0);
+
+      // close unused file descriptor
+      close(cmd.in);
     }
 
-    if (out != 1){
-      dup2 (out, 1);
-      close (out);
+    // check if the stout is redirected
+    if(cmd.out > 0){
+      // replace standard output with output file
+      dup2(cmd.out, 1);
+
+      // close unused file descriptor
+      close(cmd.out);
     }
 
+    if(cmd.parameters[cmd.param_size - 1] != NULL && cmd.param_size > 1){
+      cmd.parameters[cmd.param_size] = NULL;
+    }
 
-    // printCommandStruct(cmd);
+    // execute the command
     execvp(cmd.cmd, cmd.parameters);
-    perror("dup2");
+
+
+    // ERROR
     perror("execvp");
-  }else{
+		perror("ERROR: Child should never arrive here.\n");
+    exit(EXIT_FAILURE);
+	}
+	// parent process
+	else {
+    // wait for child to finish
     waitPid = wait(&status);
 		if (waitPid == -1) {
 			fprintf(stderr, "ERROR: Waitpid failed.\n");
 			exit(EXIT_FAILURE);
 		}
   }
-
 }
 
 /*
   FORK PIPES
 */
-void fork_pipes (int n, struct PipelineStore s){
+int fork_pipes (int n, struct PipelineStore s){
 
-  pid_t pid;
-  // return spawn_proc(s.store[0].in, s.store[0].out, s.store[0]);
   int i;
+  // pid_t pid;
+  // int status;
   int in, fd [2];
-
 
   /* The first process should get its input from the original file descriptor 0.  */
   in = 0;
@@ -350,19 +432,15 @@ void fork_pipes (int n, struct PipelineStore s){
   /* Note the loop bound, we spawn here all, but the last stage of the pipeline.  */
   for (i = 0; i < n - 1; ++i)
     {
-      if(pipe(fd) < 0){
-        perror("pipe");
-        exit(EXIT_FAILURE);
-      }
+      pipe (fd);
+      perror("pipe");
 
       /* f [1] is the write end of the pipe, we carry `in` from the prev iteration.  */
-      spawn_proc(in, fd [1], s.store[i]);
-      // spawn_proc (in, fd [1], store + i);
-
+      spawn_proc (in, fd [1], s.store[i]);
+      perror("spawn_proc");
       /* No need for the write end of the pipe, the child will write here.  */
       close (fd [1]);
-      waitpid(pid, NULL, 0);
-
+      perror("close");
       /* Keep the read end of the pipe, the next child will read from there.  */
       in = fd [0];
     }
@@ -372,8 +450,11 @@ void fork_pipes (int n, struct PipelineStore s){
   if (in != 0)
     dup2 (in, 0);
 
+  perror("dup2");
+
   /* Execute the last stage with the current process. */
-  execvp(s.store[i].cmd, s.store[i].parameters);
+  return execvp(s.store[i].cmd, s.store[i].parameters);
+  perror("execvp");
 }
 
 //
@@ -425,7 +506,9 @@ void printArray(char ** array, int len){
   }
 }
 
-//
+/*
+  Function to print a pipeline struct
+*/
 void printPipeline(struct PipelineStore pStore){
   printf("pStore Size: %d\n", pStore.size);
   if(pStore.size <= 0){
